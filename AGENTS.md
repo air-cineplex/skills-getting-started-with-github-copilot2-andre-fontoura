@@ -27,14 +27,25 @@ Run tests:
 pytest
 ```
 
+Run the focused API suite:
+
+```bash
+pytest tests/test_app.py -q
+```
+
 ## Code-level expectations
 
 - Prefer small, focused edits in [src/app.py](src/app.py) for backend changes.
 - If the change affects the UI, keep the frontend and backend behavior aligned in [src/static](src/static).
 - Validate behavior with the smallest relevant check: a targeted test when present, otherwise a local request against the running app.
-- Do not break the core flow:
-  - `GET /activities`
-  - `POST /activities/{activity_name}/signup?email=student@mergington.edu`
+- Treat `activities` as shared mutable state. Tests must restore it in place before and after each case; use [tests/test_app.py](tests/test_app.py) as the pattern.
+
+## API and UI contract
+
+- Do not break `GET /activities`, `POST /activities/{activity_name}/signup?email=student@mergington.edu`, or `DELETE /activities/{activity_name}/participants/{email}`.
+- Success responses use `{"message": "..."}`. Errors use FastAPI's `{"detail": "..."}`: return `400` for duplicate signup and `404` for missing activities or participants.
+- Activity names contain spaces. URL-encode dynamic activity names and email path values in browser requests.
+- Keep [src/static/app.js](src/static/app.js) as the frontend contract reference: it fetches activities, derives remaining capacity from participant counts, and escapes API-provided strings before inserting HTML.
 
 ## Notes for AI agents
 
